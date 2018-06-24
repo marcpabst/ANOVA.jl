@@ -1,12 +1,7 @@
 module ANOVA
 
-import GLM
-import DataFrames
-import Distributions
-import CategoricalArrays
+using GLM, DataFrames, Distributions, CategoricalArrays
 
-
-export anova
 
 ## helper functions
 function effects(mod::LinearModel)
@@ -89,5 +84,7 @@ output2 = DataFrame(
           p = vcat(pval, "", "")
           )
 end
+
+export anova
 
 end # module
