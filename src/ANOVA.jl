@@ -1,5 +1,10 @@
 module ANOVA
 
+import GLM
+import DataFrames
+import Distributions
+import CategoricalArrays
+
 
 export anova
 
