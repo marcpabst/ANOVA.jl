@@ -1,5 +1,8 @@
 module ANOVA
 
+
+export anova
+
 ## helper functions
 function effects(mod::LinearModel)
     return (mod.pp.X / cholfact!(mod.pp)[:U])' * mod.rr.y
