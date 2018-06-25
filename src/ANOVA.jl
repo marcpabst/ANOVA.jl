@@ -13,10 +13,10 @@ struct AnovaObject
 end
 
 
-struct AnovaDataFrameRegressionModel{M,T} <: StatsModels.RegressionModel
+struct AnovaDataFrameRegressionModel{M} <: StatsModels.RegressionModel
   model::M
   mf::ModelFrame
-  mm
+  mm::ModelMatrix
   anova::AnovaObject
 end
 
@@ -36,12 +36,11 @@ function StatsBase.fit(::Type{LinearModel}, f::Formula, df::AbstractDataFrame, o
   mm = ModelMatrix(mf)
   y = StatsModels.model_response(mf)
 
-
   model = fit(LinearModel, mm.m, y, args...; kwargs...)
-  AnovaDataFrameRegressionModel{LinearModel,Any}(model, mf, mm, computeanova(model, mf, mm; options.anovatype))
+  AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, computeanova(model, mf, mm, options.anovatype))
 end
 
-## helper functions 
+## helper functions ##
 
 # calculate effects for type I ANOVA (I stole this somewhere, but don't remember where :( )
 function effects(mod)
@@ -56,7 +55,7 @@ function droptermbymask(mod, mask)
 end
 
 # calculate ANOVA
-function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype)
+function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix, anovatype::Int)
 
   eff = effects(mod) # get effect sizes 
 
