@@ -1,4 +1,4 @@
-# ANOVA
+# Analysis of Variance in Julia
 Calculate ANOVA tables for linear models. Currently supports type I and type III.
 
 Usage:
