@@ -1,10 +1,10 @@
 module ANOVA
 
-using GLM, DataFrames, Distributions, CategoricalArrays
+using GLM, DataFrames, Distributions, CategoricalArrays, ArgCheck
 
 
 ## helper functions
-function effects(mod::LinearModel)
+function effects(mod)
     return (mod.pp.X / cholfact!(mod.pp)[:U])' * mod.rr.y
   end
 
@@ -14,9 +14,22 @@ function droptermbymask(mod, mask)
     return lm(matrix,y)
 end
 
+"""
+    anova(model[,anovatype=3,siglevel=0.05])
 
-function anova(mod; anovatype = 3)
-    
+Calculate an ANOVA from the given linear model.
+
+!!! warning "Do not use type I ANOVA with unbalanced data!"
+
+    And this is another one.
+
+    This warning admonition has a custom title: `"Beware!"`.
+"""
+function anova(mod; anovatype = 3, siglevel=0.05)
+
+  @argcheck anovatype == 1 || anovatype == 3 "Argument 'anovatype' must be either '1' or '3'"
+
+  if(anovatype==1) warn("Type I ANOVAs should used with care (or not at all) if your data is unbalanced.") end
 
   eff = effects(mod.model) # get effect sizes 
 
@@ -49,6 +62,7 @@ function anova(mod; anovatype = 3)
   RSS = zeros(T,Nfactors)  # 
   F = zeros(T,Nfactors)    # will contain F values for factors
   pval = zeros(T,Nfactors) # will contain pvalue for factors
+  pvals = Array{String}(Nfactors) # will contain pvalue for factors
 
 
 for i in 1:Nfactors
@@ -58,7 +72,6 @@ for i in 1:Nfactors
     newmod = droptermbymask(mod, mask)
     RSS[i] = deviance(newmod)
     SS[i] = RSS[i] - deviance(mod)
-
     DF[i] = sum(mask)
     MSS[i] = SS[i]/DF[i]
     F[i] = ftest(mod.model,newmod).fstat[1]
@@ -71,17 +84,17 @@ for i in 1:Nfactors
   end
 
   pval[i] = ccdf(FDist(DF[i], DFres), F[i])
-  print(terms[i])
+  pvals[i] = if pval[i] < siglevel string(pval[i],"*") else string(pval[i]) end
 end
+println("ANOVA table for linear model")
 
-
-output2 = DataFrame( 
-          Source = vcat(terms,"Residuals", "Total"),
-          DF = vcat(DF,DFres, "-"),
-          SS = vcat(SS, SSres, "-"),
-          MSS = vcat(MSS, MSSres, "-"),
-          F = vcat(F, "", ""),
-          p = vcat(pval, "", "")
+DataFrame( 
+          Source = vcat(terms,"Residuals"),
+          DF = vcat(DF,DFres),
+          SS = vcat(SS, SSres),
+          MSS = vcat(MSS, MSSres),
+          F = vcat(F, ""),
+          p = vcat(pvals, "")
           )
 end
 
