@@ -1,5 +1,8 @@
 using ANOVA
 using RDatasets
+using GLM
+using DataFrames
+
 @static if VERSION < v"0.7.0-DEV.2005"
     using Base.Test
 else
@@ -16,5 +19,5 @@ model = fit(LinearModel,
             data, 
             contrasts = Dict(:Supp => EffectsCoding(),:Dose => EffectsCoding()))
 
-@test ANOVA.anova(model).p[1] ≈ 0.00042927927678531035
-@test ANOVA.anova(model).p[2] ≈ 1.8711626362930449e-17
+@test anova(model).p[1] ≈ 0.00042927927678531035
+@test anova(model).p[2] ≈ 1.8711626362930449e-17
