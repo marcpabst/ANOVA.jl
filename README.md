@@ -18,7 +18,7 @@ data[:Dose] = categorical(data[:Dose])
 model = fit(LinearModel,
             @formula(Len ~  Supp + Dose), 
             data, 
-            contrasts = Dict(:Supp => EffectsCoding(),:Dose => EffectsCoding())            )
+            contrasts = Dict(:Supp => EffectsCoding(),:Dose => EffectsCoding()))
 anova(model)
  ```
  Output
