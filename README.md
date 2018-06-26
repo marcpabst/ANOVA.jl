@@ -5,7 +5,7 @@
 
 Calculate ANOVA tables for linear models. Currently supports type I and type III.
 
-Minimal Example:
+Minimal Examples:
 
 ```julia
 using ANOVA
@@ -19,8 +19,8 @@ model = fit(LinearModel,
             @formula(Len ~  Supp + Dose), 
             data, 
             contrasts = Dict(:Supp => EffectsCoding(),:Dose => EffectsCoding()),
-            AnovaOptions(1) )
-
+            )
+anova(model)
  ```
  Output
  ```

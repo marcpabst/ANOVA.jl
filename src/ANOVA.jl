@@ -1,6 +1,6 @@
 module ANOVA
 
-using GLM, DataFrames, Distributions, CategoricalArrays, ArgCheck
+using GLM, DataFrames, Distributions, CategoricalArrays, ArgCheck, StatsModels
 import StatsBase
 
 struct AnovaObject
@@ -37,7 +37,7 @@ function StatsBase.fit(::Type{LinearModel}, f::Formula, df::AbstractDataFrame, o
   y = StatsModels.model_response(mf)
 
   model = fit(LinearModel, mm.m, y, args...; kwargs...)
-  AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, computeanova(model, mf, mm, options.anovatype))
+  AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, anova(model, mf, mm, anovatype = options.anovatype))
 end
 
 ## helper functions ##
@@ -55,7 +55,7 @@ function droptermbymask(mod, mask)
 end
 
 # calculate ANOVA
-function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix, anovatype::Int)
+function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
 
   eff = effects(mod) # get effects 
 
@@ -118,12 +118,19 @@ AnovaObject(
           )
 end
 
+anova(mod::StatsModels.DataFrameRegressionModel; anovatype = 3) = anova(mod.model, mod.mf, mod.mm, anovatype = anovatype)
+
+
+
 StatsBase.predict(m::AnovaDataFrameRegressionModel) = predict(m.model)
 StatsBase.residuals(m::AnovaDataFrameRegressionModel) = residuals(m.model)
 
 function Base.show(io::IO, m::AnovaDataFrameRegressionModel)
-  x = m.anova
   println("ANOVA table for linear model")
+  print(m.anova)
+end
+
+function Base.show(io::IO, x::AnovaObject)
   print(DataFrame( 
           Source = x.Source,
           DF = x.DF,
@@ -134,6 +141,6 @@ function Base.show(io::IO, m::AnovaDataFrameRegressionModel)
           ))
 end
 
-export AnovaDataFrameRegressionModel, AnovaOptions
+export AnovaDataFrameRegressionModel, AnovaOptions, anova
 
 end # module
