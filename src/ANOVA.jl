@@ -57,12 +57,11 @@ end
 # calculate ANOVA
 function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix, anovatype::Int)
 
-  eff = effects(mod) # get effect sizes 
+  eff = effects(mod) # get effects 
 
-  T = eltype(mod.pp.X)
-  response = mf.terms.eterms[1]
+  T = eltype(mod.pp.X) # get types
+  response = mf.terms.eterms[1] 
   terms = mf.terms.terms
-  assign = mm.assign
 
   ## calculate variables for residuals (this is the full / saturated modell) ##
   DFres = dof_residual(mod)           # degrees of freedom
@@ -71,15 +70,14 @@ function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix, anovaty
   MSSres = SSres / DFres              # calculate mean sum of squares for residuals
 
   # check if there is an intercept
-  k = all(mod.pp.X[:,1] .== 1.0) ? 1 : 0
+  v = all(mod.pp.X[:,1] .== 1.0) ? 1 : 0
 
   # get assigned numbers for factors
-  factors_assig = unique(assign)
+  factors_assig = unique(mm.assign)
 
   ## calculate some variables for computation ##
   n = length(predict(mod))              # sample size
-  Ncomb = length(assign)                # number of combinations
-  Nfactors = length(factors_assig) - k  # number of factors
+  Nfactors = length(factors_assig) - v  # number of factors
 
   ## create arrays for ANOVA factors ##
   DF = zeros(T,Nfactors)   # will contain degrees of freedoms for factor
@@ -91,8 +89,7 @@ function computeanova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix, anovaty
 
 
 for i in 1:Nfactors
-  v = factors_assig[i+k]
-  mask = assign .== v
+  mask = mm.assign .== factors_assig[i+v]
   if anovatype == 3 # if this is a type III ANOVA, we use a similar procedure to R's drop1() function
     newmod = droptermbymask(mod, mask)
     RSS[i] = deviance(newmod)
@@ -100,7 +97,7 @@ for i in 1:Nfactors
     DF[i] = sum(mask)
     MSS[i] = SS[i]/DF[i]
     F[i] = ftest(mod,newmod).fstat[1]
-  else
+  else # type I ANOVA
     SS[i] = sum(abs2.(eff[mask]))
     RSS[i] = 0
     DF[i] = sum(mask)
@@ -109,7 +106,6 @@ for i in 1:Nfactors
   end
 
   p[i] = ccdf(FDist(DF[i], DFres), F[i])
-  #pvals[i] = if pval[i] < siglevel string(pval[i],"*") else string(pval[i]) end
 end
 
 AnovaObject( 
@@ -117,8 +113,8 @@ AnovaObject(
           vcat(DF,DFres),
           vcat(SS, SSres),
           vcat(MSS, MSSres),
-          vcat(F, -1),
-          vcat(p, -1)
+          vcat(F, 0),
+          vcat(p, 0)
           )
 end
 
