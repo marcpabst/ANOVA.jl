@@ -25,20 +25,20 @@ struct AnovaOptions
 end
 
 
-function StatsBase.fit(::Type{LinearModel}, f::Formula, df::AbstractDataFrame, options::AnovaOptions,args...; contrasts::Dict = Dict(), kwargs...)
+# function StatsBase.fit(::Type{LinearModel}, f::Formula, df::AbstractDataFrame, options::AnovaOptions,args...; contrasts::Dict = Dict(), kwargs...)
 
-  @argcheck options.anovatype == 1 || options.anovatype == 3 "'anovatype' in 'options' must be either '1' or '3'"
+#   @argcheck options.anovatype == 1 || options.anovatype == 3 "'anovatype' in 'options' must be either '1' or '3'"
 
-  trms = StatsModels.Terms(f)
-  StatsModels.drop_intercept(LinearModel) && (trms.intercept = true)
-  mf = ModelFrame(trms, df, contrasts=contrasts)
-  StatsModels.drop_intercept(LinearModel) && (mf.terms.intercept = false)
-  mm = ModelMatrix(mf)
-  y = StatsModels.model_response(mf)
+#   trms = StatsModels.Terms(f)
+#   StatsModels.drop_intercept(LinearModel) && (trms.intercept = true)
+#   mf = ModelFrame(trms, df, contrasts=contrasts)
+#   StatsModels.drop_intercept(LinearModel) && (mf.terms.intercept = false)
+#   mm = ModelMatrix(mf)
+#   y = StatsModels.model_response(mf)
 
-  model = fit(LinearModel, mm.m, y, args...; kwargs...)
-  AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, anova(model, mf, mm, anovatype = options.anovatype))
-end
+#   model = fit(LinearModel, mm.m, y, args...; kwargs...)
+#   AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, anova(model, mf, mm, anovatype = options.anovatype))
+# end
 
 ## helper functions ##
 
@@ -63,7 +63,7 @@ function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
   response = mf.terms.eterms[1] 
   terms = mf.terms.terms
 
-  ## calculate variables for residuals (this is the full / saturated modell) ##
+  ## calculate variables for residuals (this is the full modell) ##
   DFres = dof_residual(mod)           # degrees of freedom
   #SSres = sum(abs2.(residuals(mod))) # used deviance() instead
   SSres = deviance(mod)               # calculate sum of squares of weighted residuals
@@ -91,6 +91,7 @@ function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
 for i in 1:Nfactors
   mask = mm.assign .== factors_assig[i+v]
   if anovatype == 3 # if this is a type III ANOVA, we use a similar procedure to R's drop1() function
+    print(mask)
     newmod = droptermbymask(mod, mask)
     RSS[i] = deviance(newmod)
     SS[i] = RSS[i] - deviance(mod)
@@ -141,6 +142,6 @@ function Base.show(io::IO, x::AnovaObject)
           ))
 end
 
-export AnovaDataFrameRegressionModel, AnovaOptions, anova
+export AnovaDataFrameRegressionModel, AnovaOptions, anova, AnovaObject
 
 end # module
