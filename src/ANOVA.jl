@@ -121,10 +121,14 @@ end
 
 anova(mod::StatsModels.DataFrameRegressionModel; anovatype = 3) = anova(mod.model, mod.mf, mod.mm, anovatype = anovatype)
 
-
-
-StatsBase.predict(m::AnovaDataFrameRegressionModel) = predict(m.model)
-StatsBase.residuals(m::AnovaDataFrameRegressionModel) = residuals(m.model)
+function Base.isapprox(a::ANOVA.AnovaObject, b::ANOVA.AnovaObject)
+  all( [a.Source == b.Source,
+  all(a.DF .≈ b.DF),
+  all(a.SS .≈ b.SS),
+  all(a.MSS .≈ b.MSS),
+  all(a.F .≈ b.F),
+  all( a.p .≈ b.p)])
+end
 
 function Base.show(io::IO, m::AnovaDataFrameRegressionModel)
   println("ANOVA table for linear model")

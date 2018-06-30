@@ -1,4 +1,4 @@
-import ANOVA
+using ANOVA
 using DataFrames
 using GLM
 
@@ -45,7 +45,7 @@ data[:Distance] = convert(Array{Float64,1}, data[:Distance])
 
 # prepare test for ANOVA type III
 
-anova3_expected = ANOVA.AnovaObject( 
+anova3_expected = AnovaObject( 
           vcat("ABS", "Tread", "Tire","ABS & Tread", "ABS & Tire", "Tread & Tire", "&(ABS, Tread, Tire)", "Residuals"),
           vcat(1 , 1, 2, 1, 2, 2, 2, 13),
           vcat(102.1138211805702980, 2.0356309732669118, 40.1164208238708397, 6.9792255733881632, 12.3635146287293978, 1.6557631208168218, 4.7578414794463484, 31.237427095361188),
@@ -57,11 +57,11 @@ model3 = fit(LinearModel,
             @formula(Distance ~ ABS * Tread * Tire), 
             data, 
             contrasts = Dict(:ABS => EffectsCoding(),:Tread => EffectsCoding(), :Tire => EffectsCoding()))
-anova3_actual  = ANOVA.anova(model3, anovatype = 3)
+anova3_actual  = anova(model3, anovatype = 3)
 
 
 # prepare test for ANOVA type I
-anova1_expected = ANOVA.AnovaObject( 
+anova1_expected = AnovaObject( 
           vcat("ABS", "Tread", "Tire","ABS & Tread", "ABS & Tire", "Tread & Tire", "&(ABS, Tread, Tire)", "Residuals"),
           vcat(1 , 1, 2, 1, 2, 2, 2, 13),
           vcat(106.5991986929681445,   2.3651163588824207,  38.2807197340170120,   7.8051389666327555,  12.5399359441607761,   1.6429152697879308, 4.7578414794463368,31.2374270953612125),
@@ -73,16 +73,9 @@ model1 = fit(LinearModel,
             @formula(Distance ~ ABS * Tread * Tire), 
             data, 
             contrasts = Dict(:ABS => EffectsCoding(),:Tread => EffectsCoding(), :Tire => EffectsCoding()))
-anova1_actual  = ANOVA.anova(model1, anovatype = 1)
+anova1_actual  = anova(model1, anovatype = 1)
 
 @test anova3_actual ≈ anova3_expected
 @test anova1_actual ≈ anova1_expected
 
-function Base.isapprox(a::ANOVA.AnovaObject, b::ANOVA.AnovaObject)
-    all( [a.Source == b.Source,
-    all(a.DF .≈ b.DF),
-    all(a.SS .≈ b.SS),
-    all(a.MSS .≈ b.MSS),
-    all(a.F .≈ b.F),
-    all( a.p .≈ b.p)])
-end
+
