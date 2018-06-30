@@ -24,22 +24,6 @@ struct AnovaOptions
   anovatype::Int
 end
 
-
-# function StatsBase.fit(::Type{LinearModel}, f::Formula, df::AbstractDataFrame, options::AnovaOptions,args...; contrasts::Dict = Dict(), kwargs...)
-
-#   @argcheck options.anovatype == 1 || options.anovatype == 3 "'anovatype' in 'options' must be either '1' or '3'"
-
-#   trms = StatsModels.Terms(f)
-#   StatsModels.drop_intercept(LinearModel) && (trms.intercept = true)
-#   mf = ModelFrame(trms, df, contrasts=contrasts)
-#   StatsModels.drop_intercept(LinearModel) && (mf.terms.intercept = false)
-#   mm = ModelMatrix(mf)
-#   y = StatsModels.model_response(mf)
-
-#   model = fit(LinearModel, mm.m, y, args...; kwargs...)
-#   AnovaDataFrameRegressionModel{LinearModel}(model, mf, mm, anova(model, mf, mm, anovatype = options.anovatype))
-# end
-
 ## helper functions ##
 
 # calculate effects for type I ANOVA (I stole this somewhere, but don't remember where :( )
@@ -55,6 +39,12 @@ function droptermbymask(mod, mask)
 end
 
 # calculate ANOVA
+
+"""
+    anova(mod, mf, mm[, anovatype = 3])
+
+Compute an ANOVA table for the given linear model.
+"""
 function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
 
   eff = effects(mod) # get effects 
