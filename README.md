@@ -5,7 +5,7 @@
 
 Calculate ANOVA tables for linear models. Currently supports type I and type III.
 
-Minimal Examples:
+Minimal Example:
 
 ```julia
 using ANOVA
