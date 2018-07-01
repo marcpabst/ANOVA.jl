@@ -5,6 +5,8 @@
 
 Calculate ANOVA tables for linear models. Currently supports type I and type III.
 
+Important: Make sure to use `EffectsCoding` on all your predictors, or results won't be meaningful.
+
 Minimal Example:
 
 ```julia
