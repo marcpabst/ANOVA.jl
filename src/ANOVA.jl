@@ -12,7 +12,6 @@ struct AnovaObject
   p::Array{AbstractFloat,1}
 end
 
-
 struct AnovaDataFrameRegressionModel{M} <: StatsModels.RegressionModel
   model::M
   mf::ModelFrame
@@ -26,6 +25,9 @@ end
 
 ## helper functions ##
 
+function merge_bool_array(a, b)
+return ifelse.(b,b,a)
+end
 # calculate effects for type I ANOVA (I stole this somewhere, but don't remember where :( )
 function effects(mod)
     return (mod.pp.X / cholfact!(mod.pp)[:U])' * mod.rr.y
@@ -33,10 +35,11 @@ function effects(mod)
 
 # this will drop variables from the matrix using the mask argument and fit a new linear model
 function droptermbymask(mod, mask)
-    matrix = mod.pp.X[:,.!mask]
-    y = mod.rr.y
-    return lm(matrix,y)
+  matrix = mod.pp.X[:,.!mask]
+  y = mod.rr.y
+  return lm(matrix,y)
 end
+
 
 # calculate ANOVA
 
@@ -81,13 +84,44 @@ function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
 for i in 1:Nfactors
   mask = mm.assign .== factors_assig[i+v]
   if anovatype == 3 # if this is a type III ANOVA, we use a similar procedure to R's drop1() function
-    print(mask)
-    newmod = droptermbymask(mod, mask)
+    fullmod = mod
+    newmod = droptermbymask(fullmod, mask)
     RSS[i] = deviance(newmod)
-    SS[i] = RSS[i] - deviance(mod)
+    SS[i] = RSS[i] - deviance(fullmod)
     DF[i] = sum(mask)
     MSS[i] = SS[i]/DF[i]
-    F[i] = ftest(mod,newmod).fstat[1]
+    F[i] = ftest(fullmod,newmod).fstat[1]
+  elseif anovatype == 2 # if this is a type II ANOVA
+    full_model_mask = falses(length(mm.assign))
+    println("_____")
+    println(terms[i])
+    println("_____")
+    for j in 1:Nfactors
+      term = terms[j]
+      if(typeof(term) == Expr && typeof(terms[i])==Symbol) # this is not an interaction term
+        if(terms[i] in term.args)
+          println(string("DROP: ", term))
+          full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
+        end      
+       elseif(typeof(term) == Expr && typeof(terms[i])==Expr) # this is an interaction term
+        if(all(in.(terms[i].args, (term.args,) )) && term != terms[i])
+          println(string("DROP: ", term))
+          full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
+        end
+      end
+    end
+    fullmod = droptermbymask(mod, full_model_mask) # we have to drop all interaction terms containing the current term in the full modell
+    newmod = droptermbymask(mod, merge_bool_array(full_model_mask, mask))
+    println(full_model_mask)
+    println(mask)
+    println(merge_bool_array(full_model_mask, mask))
+    println(fullmod)
+    println(newmod)
+    RSS[i] = deviance(newmod)
+    SS[i] = RSS[i] - deviance(fullmod)
+    DF[i] = sum(mask)
+    MSS[i] = SS[i]/DF[i]
+    F[i] = MSS[i]/MSSres
   else # type I ANOVA
     SS[i] = sum(abs2.(eff[mask]))
     RSS[i] = 0
