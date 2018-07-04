@@ -93,30 +93,20 @@ for i in 1:Nfactors
     F[i] = ftest(fullmod,newmod).fstat[1]
   elseif anovatype == 2 # if this is a type II ANOVA
     full_model_mask = falses(length(mm.assign))
-    println("_____")
-    println(terms[i])
-    println("_____")
     for j in 1:Nfactors
       term = terms[j]
       if(typeof(term) == Expr && typeof(terms[i])==Symbol) # this is not an interaction term
         if(terms[i] in term.args)
-          println(string("DROP: ", term))
           full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
         end      
        elseif(typeof(term) == Expr && typeof(terms[i])==Expr) # this is an interaction term
         if(all(in.(terms[i].args, (term.args,) )) && term != terms[i])
-          println(string("DROP: ", term))
           full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
         end
       end
     end
     fullmod = droptermbymask(mod, full_model_mask) # we have to drop all interaction terms containing the current term in the full modell
     newmod = droptermbymask(mod, merge_bool_array(full_model_mask, mask))
-    println(full_model_mask)
-    println(mask)
-    println(merge_bool_array(full_model_mask, mask))
-    println(fullmod)
-    println(newmod)
     RSS[i] = deviance(newmod)
     SS[i] = RSS[i] - deviance(fullmod)
     DF[i] = sum(mask)
