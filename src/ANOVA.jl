@@ -48,7 +48,7 @@ end
 
 Compute an ANOVA table for the given linear model.
 """
-function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 3)
+function anova(mod::LinearModel, mf::ModelFrame, mm::ModelMatrix; anovatype = 2)
 
   eff = effects(mod) # get effects 
 

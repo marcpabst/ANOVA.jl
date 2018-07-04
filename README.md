@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/marcpabst/ANOVA.jl/badge.svg?x=b&branch=master)](https://coveralls.io/github/marcpabst/ANOVA.jl?branch=master)
 
 
-Calculate ANOVA tables for linear models. Currently supports type I and type III.
+Calculate ANOVA tables for linear models. If no `anovatype` argument is provided, a type II ANOVA will be calculated. Type I and II are also supported for compatibility. Support for mixed models and a more convenient way to create ANOVAs (similar to the `ez` package in R) is planned.
 
 Important: Make sure to use `EffectsCoding` on all your predictors, or results won't be meaningful.
 
