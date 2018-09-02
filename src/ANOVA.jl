@@ -26,14 +26,15 @@ end
 ## helper functions ##
 
 function merge_bool_array(a, b)
-return ifelse.(b,b,a)
+  return ifelse.(b,b,a)
 end
+
 # calculate effects for type I ANOVA (I stole this somewhere, but don't remember where :( )
 function effects(mod)
     return (mod.pp.X / cholfact!(mod.pp)[:U])' * mod.rr.y
-  end
+end
 
-# this will drop variables from the matrix using the mask argument and fit a new linear model
+# this will drop variables from the matrix using the mask argument then fit a new linear model
 function droptermbymask(mod, mask)
   matrix = mod.pp.X[:,.!mask]
   y = mod.rr.y
