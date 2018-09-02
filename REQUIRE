@@ -4,5 +4,4 @@ DataFrames
 Distributions
 CategoricalArrays
 ArgCheck
-StatsModels 
-LinearAlgebra
+StatsModels
