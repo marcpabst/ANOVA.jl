@@ -1,6 +1,6 @@
 module ANOVA
 
-using GLM, DataFrames, Distributions, CategoricalArrays, ArgCheck, StatsModels
+using GLM, DataFrames, Distributions, CategoricalArrays, ArgCheck, StatsModels, LinearAlgebra
 import StatsBase
 
 struct AnovaObject
