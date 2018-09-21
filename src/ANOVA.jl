@@ -31,7 +31,7 @@ end
 
 # calculate effects for type I ANOVA
 function effects(mod)
-    return (mod.pp.X / cholesky!(mod.pp)[:U])' * mod.rr.y
+    return (mod.pp.X / cholesky!(mod.pp).U)' * mod.rr.y
 end
 
 # this will drop variables from the matrix using the mask argument then fit a new linear model
