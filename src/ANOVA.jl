@@ -1,6 +1,7 @@
 module ANOVA
-using GLM: ccdf, cholesky!, CoefTable, deviance, dof_residual, FDist, fit,
-           ftest, LinearModel, nobs
+import GLM: ccdf, cholesky!, CoefTable, deviance, dof_residual, FDist, fit,
+            ftest, LinearModel, nobs, drop_term, StatsModels.hasintercept, term,
+            width, InteractionTerm
 
 import Base: show, summary
 
@@ -22,9 +23,8 @@ struct Anova
     mod = mod.model
 
     eff = effects(mod) # get effects
-
-    response = mf.terms.eterms[1]
-    terms = mf.terms.terms
+    response = mf.f.lhs
+    terms = drop_term(mf.f.rhs, term(1))
 
     ## calculate variables for residuals (this is the full modell) ##
     DFres = dof_residual(mod)           # degrees of freedom
@@ -32,24 +32,26 @@ struct Anova
     MSSres = SSres / DFres              # calculate mean sum of squares for residuals
 
     # check if there is an intercept
-    v = mf.terms.intercept
+    v = hasintercept(mf.f)
 
     # get assigned numbers for factors
     factors_assig = unique(mm.assign)
 
     ## calculate some variables for computation ##
     n = nobs(mod)                                # sample size
-    Nfactors = count(x -> x > 0, factors_assig)  # number of factors
+    Nfactors = length(factors_assig) - v         # number of factors
 
     ## create arrays for ANOVA factors ##
-    DF = zeros(Nfactors)   # will contain degrees of freedoms for factor
-    SS = zeros(Nfactors)   # will contain sum of squares for factor
-    MSS = zeros(Nfactors)  # will contain mean sum of squares for factor
-    RSS = zeros(Nfactors)  #
-    F = zeros(Nfactors)    # will contain F values for factors
-    p = zeros(Nfactors)    # will contain pvalue for factors
+    Source = fill("", Nfactors + 1)
+    DF = zeros(Nfactors + 1)
+    SS = zeros(Nfactors + 1)
+    MSS = zeros(Nfactors + 1)
+    RSS = zeros(Nfactors + 1)
+    F = zeros(Nfactors + 1)
+    p = zeros(Nfactors + 1)
 
     for i in 1:Nfactors
+      Source[i] = string(terms.terms[i])
       mask = mm.assign .== factors_assig[i+v]
       if anovatype == 3 # if this is a type III ANOVA, we use a similar procedure to R's drop1() function
         fullmod = mod
@@ -62,15 +64,14 @@ struct Anova
       elseif anovatype == 2 # if this is a type II ANOVA
         full_model_mask = falses(length(mm.assign))
         for j in 1:Nfactors
-          term = terms[j]
-          if (isa(term, Expr) && isa(terms[i], Symbol)) # this is not an interaction term
-            if terms[i] ∈ term.args
-              full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
-            end
-          elseif (isa(term, Expr) && isa(terms[i], Expr)) # this is an interaction term
-            if (all(x -> x ∈ term.args, terms[i].args) && term ≠ terms[i])
-              full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
-            end
+          term = terms.terms[j]
+          if typeof(term) <: InteractionTerm
+              if (!(typeof(terms.terms[i]) <: InteractionTerm) && # this is not an interaction term
+                  terms.terms[i] ∈ term.terms) ||
+                  (typeof(terms.terms[i]) <: InteractionTerm && # this is an interaction term
+                  all(x -> x ∈ term.terms, terms.terms[i].terms) && term ≠ terms.terms[i])
+                    full_model_mask = merge_bool_array(full_model_mask, mm.assign .== factors_assig[j+v])
+              end
           end
         end
         fullmod = droptermbymask(mod, full_model_mask) # we have to drop all interaction terms containing the current term in the full modell
@@ -89,12 +90,13 @@ struct Anova
       end
       p[i] = ccdf(FDist(DF[i], DFres), F[i])
     end
-    new(vcat(string.(terms), "Residuals"),
-        vcat(DF, DFres),
-        vcat(SS, SSres),
-        vcat(MSS, MSSres),
-        vcat(F, 0),
-        vcat(p, 0))
+    Source[end] = "Residuals"
+    DF[end] = DFres
+    SS[end] = SSres
+    MSS[end] = MSSres
+    F[end] = 0.
+    p[end] = 0.
+    new(Source, DF, SS, MSS, F, p)
   end
   Anova(Source::AbstractVector{<:AbstractString},
         DF::AbstractVector{<:Real},
