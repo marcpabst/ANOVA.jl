@@ -20,7 +20,7 @@ model = fit(LinearModel,
             @formula(Len ~  Supp + Dose),
             data,
             contrasts = Dict(:Supp => EffectsCoding(), :Dose => EffectsCoding()))
-anova(model)
+Anova(model)
 ANOVA table for linear model
              DF      SS     MSS       F      p
 Supp        1.0  205.35  205.35 14.0166 0.0004
