@@ -60,7 +60,7 @@ struct Anova
         SS[i] = RSS[i] - deviance(fullmod)
         DF[i] = count(mask)
         MSS[i] = SS[i]/DF[i]
-        F[i] = ftest(fullmod,newmod).fstat[1]
+        F[i] = ftest(fullmod,newmod).fstat[end]
       elseif anovatype == 2 # if this is a type II ANOVA
         full_model_mask = falses(length(mm.assign))
         for j in 1:Nfactors
