@@ -11,7 +11,7 @@ Important: Make sure to use `EffectsCoding` on all your predictors, or results w
 Minimal Example:
 
 ```julia
-using RDatasets, GLM, ANOVA
+using RDatasets, GLM, ANOVA, CategoricalArrays
 
 data = dataset("datasets", "ToothGrowth")
 categorical!(data, :Dose)
@@ -21,6 +21,9 @@ model = fit(LinearModel,
             data,
             contrasts = Dict(:Supp => EffectsCoding(), :Dose => EffectsCoding()))
 Anova(model)
+```
+
+```
 ANOVA table for linear model
              DF      SS     MSS       F      p
 Supp        1.0  205.35  205.35 14.0166 0.0004
